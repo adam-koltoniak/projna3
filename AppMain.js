@@ -1,157 +1,39 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 import {
-  StyleSheet,
-  Text,
-  View,
-  Button,
-  Dimensions,
-  TextInput,
-  ActivityIndicator,
-  Pressable,
-} from "react-native";
-import { auth } from "./firebaseConfig";
-
-import {
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-  signOut,
-  createUserWithEmailAndPassword,
+    onAuthStateChanged,
 } from "firebase/auth";
+import { auth } from "./firebaseConfig";
+import LoginScreen from './lib/screens/LoginScreen';
+import NotesListScreen from "./lib/screens/NotesListScreen";
 
-const { width, height } = Dimensions.get("window");
-console.log(width, height);
+const Stack = createStackNavigator();
 
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const AppMain = () => {
+    const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
-      console.log("User is still logged in: ", user);
-      if (user) {
-        setUser(user);
-      }
-    });
-  }, [user]);
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+            setUser(authUser);
+        });
 
-  const handleLogin = () => {
-    signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        console.log("User logged in successfully: ", userCredential);
-        setUser(userCredential);
-      })
-      .catch((error) => {
-        console.log("Error", error);
-      });
-  };
+        return () => unsubscribe();
+    }, []);
 
-  const handleCreateUser = () => {
-    createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        console.log("user logged in successfully: ", userCredential);
-        setUser(userCredential);
-      })
-      .catch((error) => {
-        console.log("Error", error);
-      });
-  };
-
-  const handleLogout = () => {
-    signOut(auth)
-      .then(() => {
-        console.log("User logged out successfully:");
-        setUser(null);
-      })
-      .catch((error) => {
-        console.log("Error", error);
-      });
-  };
-
-  if (!user) {
     return (
-      <View style={[styles.container]}>
-        <Text style={styles.header}>Log In App</Text>
-        <TextInput
-          style={styles.inputText}
-          placeholder="Email"
-          value={email}
-          onChangeText={(text) => setEmail(text)}
-        />
-        <TextInput
-          style={styles.inputText}
-          placeholder="Password"
-          secureTextEntry={true}
-          value={password}
-          onChangeText={(text) => setPassword(text)}
-        />
-        <Pressable onPress={handleLogin} style={styles.buttons}>
-          <Text style={styles.buttonText}>Log In</Text>
-        </Pressable>
-        <Pressable onPress={handleCreateUser} style={styles.buttons}>
-          <Text style={styles.buttonText}>Create User</Text>
-        </Pressable>
-        <Text styles={styles.text} type="black">
-          {"\nYou Are Logged Out."}
-        </Text>
-      </View>
+        <NavigationContainer>
+            <Stack.Navigator>
+                {user ? (
+                    // User is logged in, navigate to HomeScreen
+                    <Stack.Screen name="NotesList" component={NotesListScreen} />
+                ) : (
+                    // User is not logged in, navigate to LoginScreen
+                    <Stack.Screen name="Login" component={LoginScreen} />
+                )}
+            </Stack.Navigator>
+        </NavigationContainer>
     );
-  }
+};
 
-  if (user) {
-    return (
-      <View style={styles.container}>
-        <Text style={[styles.text, { fontWeight: "bold" }]}>
-          {"User is still logged in: \n\n"}
-        </Text>
-        <Text style={styles.text}>{"email: " + user?.email}</Text>
-        <Text style={styles.text}>{"uid: " + user?.uid}</Text>
-        <Text style={styles.text}>
-          {"\nAccess Token:\n\n" + user?.accessToken}
-        </Text>
-        <Pressable onPress={handleLogout} style={styles.buttons}>
-          <Text style={styles.buttonText}>Logout</Text>
-        </Pressable>
-      </View>
-    );
-  }
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  text: {
-    color: "#000",
-    textAlign: "center",
-    paddingHorizontal: 20,
-  },
-  buttons: {
-    backgroundColor: "green",
-    height: 40,
-    width: "60%",
-    borderRadius: 10,
-    margin: 10,
-  },
-  buttonText: {
-    fontSize: 25,
-    textAlign: "center",
-    color: "white",
-    fontWeight: "bold",
-  },
-  inputText: {
-    fontSize: 25,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  header: {
-    fontSize: 30,
-    textAlign: "center",
-    fontWeight: "bold",
-    color: "green",
-    margin: 10,
-  },
-});
+export default AppMain;
