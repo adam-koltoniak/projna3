@@ -26,13 +26,11 @@ const AppMain = () => {
         <NavigationContainer>
             <Stack.Navigator>
                 {user ? (
-                    // User is logged in, navigate to NotesListScreen and NoteEditorScreen
                     <>
                         <Stack.Screen name="NotesList" component={NotesListScreen} />
                         <Stack.Screen name="NoteEditor" component={NoteEditorScreen} />
                     </>
                 ) : (
-                    // User is not logged in, navigate to LoginScreen
                     <Stack.Screen name="Login" component={LoginScreen} />
                 )}
             </Stack.Navigator>
